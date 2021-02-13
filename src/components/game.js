@@ -8,6 +8,7 @@ import Queen from '../pieces/queen';
 import Knight from '../pieces/knight';
 import Bishop from '../pieces/bishop';
 import Rook from '../pieces/rook';
+import socketIOClient from "socket.io-client";
 
 export default class Game extends React.Component {
     constructor() {
@@ -43,8 +44,18 @@ export default class Game extends React.Component {
             convertPawnPosition: undefined,
             //new game button
             disabled: false,
-            hideButton: "none"
+            hideButton: "none",
+            endpoint: "http://127.0.0.1:4444",
+            socket: null
         }
+    }
+
+    componentDidMount() {
+        const { endpoint } = this.state;
+        const socket = socketIOClient(endpoint);
+        socket.on("connected", data => {
+            console.log(data);
+        });
     }
 
     handleClick(i) {
@@ -79,7 +90,9 @@ export default class Game extends React.Component {
                 tempSquares: [],
                 convertPawnPosition: undefined,
                 disabled: false,
-                hideButton: "none"
+                hideButton: "none",
+                endpoint: "http://127.0.0.1:4444",
+                socket: null
             });
         } else if (this.state.sourceSelection === -1) {
             let highLightMoves = [];
