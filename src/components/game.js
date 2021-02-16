@@ -24,7 +24,7 @@ export default class Game extends React.Component {
             white: 16,
             black: 16,
             lastTurnPawnPosition: undefined,
-            //firstMove true === last turn enemy's pawn moved for the first time and it moved 2 squares forward. for en pasaant
+            //firstMove true means last turn enemy's pawn moved for the first time and it moved 2 squares forward. for en pasaant
             firstMove: undefined,
             highLightMoves: [],
             //for castle
