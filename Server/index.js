@@ -79,8 +79,7 @@ io.on("connection", client => {
     client.on('disconnect', () => {
         console.log("disconnect : " + client.id);
         if (typeof sockets[client.id] != "undefined") {
-            if (sockets[client.id].is_playing) {
-
+            if (sockets[client.id].is_playing && games[sockets[client.id].game_id] !== undefined) {
                 io.to(sockets[client.id].game_id).emit('opponentLeft', {});
                 players[sockets[games[sockets[client.id].game_id].player1].name].played--;
                 players[sockets[games[sockets[client.id].game_id].player2].name].played--;
@@ -92,6 +91,9 @@ io.on("connection", client => {
         client.broadcast.emit('opponentDisconnected', {
             id: client.id
         });
+        console.log(sockets)
+        console.log(players)
+        console.log(games)
     });
 
     client.on('selectOpponent', data => {
