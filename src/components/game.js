@@ -9,6 +9,8 @@ import Knight from '../pieces/knight';
 import Bishop from '../pieces/bishop';
 import Rook from '../pieces/rook';
 import socketIOClient from "socket.io-client";
+import NewUser from "./NewUser";
+import ShowUsers from "./ShowUsers";
 
 export default class Game extends React.Component {
     constructor() {
@@ -46,19 +48,31 @@ export default class Game extends React.Component {
             disabled: false,
             hideButton: "none",
             endpoint: "http://127.0.0.1:4444",
-            socket: null
+            socket: null,
+            registered: false,
+            startGame: false,
+            gameId: null,
+            gameData: null,
+            userId: null
         }
     }
 
     componentDidMount() {
+        //make connection with server
         const { endpoint } = this.state;
         const socket = socketIOClient(endpoint);
         socket.on("connected", data => {
-            console.log(data);
+            this.setState({ socket: socket, userId: data.id });
         });
+        socket.on("updateGameData", data => {
+            console.log(data === this.state.userId)
+            console.log(data)
+            console.log(this.state.userId)
+        })
     }
 
     handleClick(i) {
+        this.state.socket.emit("i", { gameId: this.state.gameId, "i": i, "sourceSelection": this.state.sourceSelection });
         let squares = this.state.squares;
         let white = this.state.white;
         let black = this.state.black;
@@ -92,7 +106,12 @@ export default class Game extends React.Component {
                 disabled: false,
                 hideButton: "none",
                 endpoint: "http://127.0.0.1:4444",
-                socket: null
+                socket: null,
+                registered: false,
+                startGame: false,
+                gameId: null,
+                gameData: null,
+                userId: null
             });
         } else if (this.state.sourceSelection === -1) {
             let highLightMoves = [];
@@ -708,35 +727,64 @@ export default class Game extends React.Component {
         return newList;
     }
 
+    registrationConfirmation = (data) => {
+        this.setState({ registered: data });
+    }
+
+    gameStartConfirmation = (data) => {
+        this.setState({ startGame: data.status, gameId: data.game_id, gameData: data.game_data });
+    }
+
     render() {
         return (
             <div>
-                <div className="game">
-                    <div className="game-board">
-                        <Board
-                            squares={this.state.squares}
-                            onClick={(i) => this.handleClick(i)}
-                            disabled={this.state.disabled}
-                        />
-                    </div>
-                    <div className="game-info">
-                        <h3>Turn</h3>
-                        <div id="player-turn-box" style={{ backgroundColor: this.state.turn }}>
+                {
+                    this.state.startGame ?
+                        <div>
+                            <div className="game">
+                                <div className="game-board">
+                                    <Board
+                                        squares={this.state.squares}
+                                        onClick={(i) => this.handleClick(i)}
+                                        disabled={this.state.disabled}
+                                    />
+                                </div>
+                                <div className="game-info">
+                                    <h3>Turn</h3>
+                                    <div id="player-turn-box" style={{ backgroundColor: this.state.turn }}>
+                                    </div>
+                                    <div className="game-status">{this.state.status}</div>
+                                    <div className="fallen-soldier-block">
+                                        {<FallenSoldierBlock
+                                            whiteFallenSoldiers={this.state.whiteFallenSoldiers}
+                                            blackFallenSoldiers={this.state.blackFallenSoldiers}
+                                        />
+                                        }
+                                    </div>
+                                    <button onClick={(i) => this.handleClick(i)} disabled={false} style={{ display: this.state.hideButton }}>new game</button>
+                                </div>
+                            </div>
+                            <div className="icons-attribution">
+                                <div> <small> Chess Icons And Favicon (extracted) By en:User:Cburnett [<a href="http://www.gnu.org/copyleft/fdl.html">GFDL</a>, <a href="http://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA-3.0</a>, <a href="http://opensource.org/licenses/bsd-license.php">BSD</a> or <a href="http://www.gnu.org/licenses/gpl.html">GPL</a>], <a href="https://commons.wikimedia.org/wiki/Category:SVG_chess_pieces">via Wikimedia Commons</a> </small></div>
+                            </div>
                         </div>
-                        <div className="game-status">{this.state.status}</div>
-                        <div className="fallen-soldier-block">
-                            {<FallenSoldierBlock
-                                whiteFallenSoldiers={this.state.whiteFallenSoldiers}
-                                blackFallenSoldiers={this.state.blackFallenSoldiers}
-                            />
+                        :
+                        <div>
+                            {
+                                this.state.registered ?
+                                    <ShowUsers socket={this.state.socket} gameStartConfirmation={this.gameStartConfirmation} />
+                                    :
+                                    <div>
+                                        {
+                                            this.state.socket !== null ?
+                                                <NewUser socket={this.state.socket} registrationConfirmation={this.registrationConfirmation} />
+                                                :
+                                                <p>Loading...</p>
+                                        }
+                                    </div>
                             }
                         </div>
-                        <button onClick={(i) => this.handleClick(i)} disabled={false} style={{ display: this.state.hideButton }}>new game</button>
-                    </div>
-                </div>
-                <div className="icons-attribution">
-                    <div> <small> Chess Icons And Favicon (extracted) By en:User:Cburnett [<a href="http://www.gnu.org/copyleft/fdl.html">GFDL</a>, <a href="http://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA-3.0</a>, <a href="http://opensource.org/licenses/bsd-license.php">BSD</a> or <a href="http://www.gnu.org/licenses/gpl.html">GPL</a>], <a href="https://commons.wikimedia.org/wiki/Category:SVG_chess_pieces">via Wikimedia Commons</a> </small></div>
-                </div>
+                }
             </div>
         );
     }
