@@ -74,7 +74,10 @@ export default class Game extends React.Component {
             if (data === this.state.userId) {
                 this.setState({ disabled: true });
             }
-        })
+        });
+        socket.on("opponentLeft", () => {
+            this.setState({ startGame: false, gameId: null, gameData: null });
+        });
     }
 
     handleClick2(i, check) {
