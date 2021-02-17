@@ -65,14 +65,19 @@ export default class Game extends React.Component {
             this.setState({ socket: socket, userId: data.id });
         });
         socket.on("updateGameData", data => {
-            console.log(data === this.state.userId)
-            console.log(data)
-            console.log(this.state.userId)
+            if (data.turn === this.state.userId) {
+                this.setState({ disabled: false });
+            }
+            this.handleClick2(data.i, false);
+        });
+        socket.on("updateBoard", data => {
+            if (data === this.state.userId) {
+                this.setState({ disabled: true });
+            }
         })
     }
 
-    handleClick(i) {
-        this.state.socket.emit("i", { gameId: this.state.gameId, "i": i, "sourceSelection": this.state.sourceSelection });
+    handleClick2(i, check) {
         let squares = this.state.squares;
         let white = this.state.white;
         let black = this.state.black;
@@ -118,6 +123,7 @@ export default class Game extends React.Component {
             if (!squares[i] || squares[i].player !== this.state.player) {
                 this.setState({ status: "Wrong selection. Choose player " + this.state.player + " pieces." });
                 squares[i] ? squares[i].style = { ...squares[i].style, backgroundColor: "" } : null;
+                this.state.socket.emit("i", { gameId: this.state.gameId, "i": i, changeTurn: false, userId: this.state.userId, check: check });
             } else {
                 //highlight selected piece
                 squares[i].style = { ...squares[i].style, backgroundColor: "RGB(111,143,114)" }; // Emerald from http://omgchess.blogspot.com/2015/09/chess-board-color-schemes.html
@@ -186,6 +192,7 @@ export default class Game extends React.Component {
                     sourceSelection: i,
                     highLightMoves: highLightMoves
                 });
+                this.state.socket.emit("i", { gameId: this.state.gameId, "i": i, changeTurn: false, userId: this.state.userId, check: check });
             }
         } else if (this.state.sourceSelection === -2) {
             //to convert pawn that reach other side of the chess board
@@ -210,9 +217,11 @@ export default class Game extends React.Component {
                     status: "",
                     convertPawnPosition: undefined,
                     sourceSelection: -1
-                })
+                });
+                this.state.socket.emit("i", { gameId: this.state.gameId, "i": i, changeTurn: true, userId: this.state.userId, check: check });
             } else {
-                this.wrongMove(squares, "Wrong selection. Choose valid source and destination again.")
+                this.wrongMove(squares, "Wrong selection. Choose valid source and destination again.");
+                this.state.socket.emit("i", { gameId: this.state.gameId, "i": i, changeTurn: false, userId: this.state.userId, check: check });
             }
         } else if (this.state.sourceSelection > -1) {
             //dehighlight selected piece
@@ -254,6 +263,7 @@ export default class Game extends React.Component {
                             allPossibleMovesWhite: allPossibleMovesWhite,
                             allPossibleMovesBlack: allPossibleMovesBlack
                         });
+                        this.state.socket.emit("i", { gameId: this.state.gameId, "i": i, changeTurn: true, userId: this.state.userId, check: check });
                     } else {
                         //check if current pawn is moving for the first time and moving 2 squares forward
                         let firstMove;
@@ -323,10 +333,12 @@ export default class Game extends React.Component {
                                 allPossibleMovesWhite: allPossibleMovesWhite,
                                 allPossibleMovesBlack: allPossibleMovesBlack
                             });
+                            this.state.socket.emit("i", { gameId: this.state.gameId, "i": i, changeTurn: true, userId: this.state.userId, check: check });
                         }
                     }
                 } else {
-                    this.wrongMove(squares, "Wrong selection. Choose valid source and destination again.")
+                    this.wrongMove(squares, "Wrong selection. Choose valid source and destination again.");
+                    this.state.socket.emit("i", { gameId: this.state.gameId, "i": i, changeTurn: false, userId: this.state.userId, check: check });
                 }
             } else if (squares[this.state.sourceSelection].name === "King") {
                 squares = this.dehighlight(squares);
@@ -367,6 +379,7 @@ export default class Game extends React.Component {
                         whiteKingFirstMove: whiteKingFirstMove,
                         blackKingFirstMove: blackKingFirstMove
                     });
+                    this.state.socket.emit("i", { gameId: this.state.gameId, "i": i, changeTurn: true, userId: this.state.userId, check: check });
                 } else if (this.state.highLightMoves.includes(i)) {
                     //update number of pieces
                     if (squares[i] !== null) {
@@ -397,8 +410,10 @@ export default class Game extends React.Component {
                         whiteKingFirstMove: whiteKingFirstMove,
                         blackKingFirstMove: blackKingFirstMove
                     });
+                    this.state.socket.emit("i", { gameId: this.state.gameId, "i": i, changeTurn: true, userId: this.state.userId, check: check });
                 } else {
-                    this.wrongMove(squares, "Wrong selection. Choose valid source and destination again.")
+                    this.wrongMove(squares, "Wrong selection. Choose valid source and destination again.");
+                    this.state.socket.emit("i", { gameId: this.state.gameId, "i": i, changeTurn: false, userId: this.state.userId, check: check });
                 }
             } else {
                 squares = this.dehighlight(squares);
@@ -446,8 +461,10 @@ export default class Game extends React.Component {
                         allPossibleMovesWhite: allPossibleMovesWhite,
                         allPossibleMovesBlack: allPossibleMovesBlack
                     });
+                    this.state.socket.emit("i", { gameId: this.state.gameId, "i": i, changeTurn: true, userId: this.state.userId, check: check });
                 } else {
-                    this.wrongMove(squares, "Wrong selection. Choose valid source and destination again.")
+                    this.wrongMove(squares, "Wrong selection. Choose valid source and destination again.");
+                    this.state.socket.emit("i", { gameId: this.state.gameId, "i": i, changeTurn: false, userId: this.state.userId, check: check });
                 }
             }
             //to record next player's possible moves
@@ -549,6 +566,12 @@ export default class Game extends React.Component {
                 black: black
             })
         }
+    }
+
+    handleClick(i) {
+        console.log("sourceselection " + this.state.sourceSelection)
+        console.log(i)
+        this.handleClick2(i, true);
     }
 
     //to determine if its possible to do en passant capture
@@ -732,6 +755,10 @@ export default class Game extends React.Component {
     }
 
     gameStartConfirmation = (data) => {
+        //if this is not this user's turn then disable chess board
+        if (data.game_data.whose_turn !== this.state.userId) {
+            this.setState({ disabled: true });
+        }
         this.setState({ startGame: data.status, gameId: data.game_id, gameData: data.game_data });
     }
 
