@@ -5,7 +5,7 @@ import Pawn from '../pieces/pawn.js';
 import Queen from '../pieces/queen.js';
 import Rook from '../pieces/rook.js';
 
-export default function initialiseChessBoard() {
+export default function initialiseChessBoard(side) {
     const squares = Array(64).fill(null);
 
     for (let i = 8; i < 16; i++) {
@@ -32,19 +32,6 @@ export default function initialiseChessBoard() {
 
     squares[59] = new Queen(1);
     squares[60] = new King(1);
-
-    // squares[20] = new King(1);
-    // squares[21] = new Pawn(2);
-    // squares[11] = new Pawn(1);
-    // squares[2] = new King(2);
-    // squares[10] = new Pawn(1);
-    // squares[54] = new Rook(2);
-    // squares[61] = new Rook(2);
-    // squares[35] = new Queen(2);
-    // squares[63] = new Bishop(1);
-    // squares[46] = new Bishop(2);
-    // squares[1] = new Knight(2);
-    // squares[50] = new Knight(1);
 
     return squares;
 }

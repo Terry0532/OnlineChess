@@ -53,7 +53,8 @@ export default class Game extends React.Component {
             startGame: false,
             gameId: null,
             gameData: null,
-            userId: null
+            userId: null,
+            rotateBoard: ""
         }
     }
 
@@ -119,7 +120,8 @@ export default class Game extends React.Component {
                 startGame: false,
                 gameId: null,
                 gameData: null,
-                userId: null
+                userId: null,
+                rotateBoard: false
             });
         } else if (this.state.sourceSelection === -1) {
             let highLightMoves = [];
@@ -572,8 +574,6 @@ export default class Game extends React.Component {
     }
 
     handleClick(i) {
-        console.log("sourceselection " + this.state.sourceSelection)
-        console.log(i)
         this.handleClick2(i, true);
     }
 
@@ -758,10 +758,11 @@ export default class Game extends React.Component {
     }
 
     gameStartConfirmation = (data) => {
-        //if this is not this user's turn then disable chess board
+        //if this is not this user's turn then disable chess board and set chess board to black
         if (data.game_data.whose_turn !== this.state.userId) {
-            this.setState({ disabled: true });
+            this.setState({ disabled: true, rotateBoard: "rotate" });
         }
+
         this.setState({ startGame: data.status, gameId: data.game_id, gameData: data.game_data });
     }
 
@@ -777,6 +778,7 @@ export default class Game extends React.Component {
                                         squares={this.state.squares}
                                         onClick={(i) => this.handleClick(i)}
                                         disabled={this.state.disabled}
+                                        rotateBoard={this.state.rotateBoard}
                                     />
                                 </div>
                                 <div className="game-info">

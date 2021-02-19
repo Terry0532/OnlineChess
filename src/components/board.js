@@ -3,7 +3,6 @@ import '../index.css';
 import Square from './square.js';
 
 export default class Board extends React.Component {
-
     renderSquare(i, squareShade) {
         return <Square
             piece={this.props.squares[i]}
@@ -11,6 +10,7 @@ export default class Board extends React.Component {
             shade={squareShade}
             onClick={() => this.props.onClick(i)}
             disabled={this.props.disabled}
+            rotate={this.props.rotateBoard}
         />
     }
 
@@ -26,7 +26,7 @@ export default class Board extends React.Component {
         }
 
         return (
-            <div>
+            <div className={this.props.rotateBoard}>
                 {board}
             </div>
         );

@@ -138,15 +138,11 @@ io.on("connection", client => {
 
     client.on("i", data => {
         let opponentId = data.userId === games[data.gameId].player1 ? games[data.gameId].player2 : games[data.gameId].player1;
-        console.log(opponentId)
-        console.log(data.userId)
         if (data.changeTurn && data.check) {
-            console.log("true")
             games[data.gameId].whose_turn = games[data.gameId].whose_turn === games[data.gameId].player1 ? games[data.gameId].player2 : games[data.gameId].player1;
             io.to(opponentId).emit("updateGameData", { turn: games[data.gameId].whose_turn, i: data.i });
             io.to(data.userId).emit("updateBoard", data.userId);
         } else if (!data.changeTurn && data.check) {
-            console.log("false")
             io.to(opponentId).emit("updateGameData", { turn: games[data.gameId].whose_turn, i: data.i });
         }
     });
