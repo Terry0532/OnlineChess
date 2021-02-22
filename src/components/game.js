@@ -71,64 +71,39 @@ export default class Game extends React.Component {
             }
             this.handleClick2(data.i, false);
         });
-        socket.on("updateBoard", data => {
-            if (data === this.state.userId) {
-                this.setState({ disabled: true });
-            }
+        socket.on("updateBoard", () => {
+            this.setState({ disabled: true });
         });
         socket.on("opponentLeft", () => {
             this.setState({ startGame: false, gameId: null, gameData: null });
         });
+        socket.on("gameover", data => {
+            this.setState({
+                disabled: true,
+                status: data.result,
+                hideButton: ""
+            });
+        });
+    }
+
+    newGame() {
+        console.log("new game")
+    }
+
+    disconnect() {
+        console.log("disconnect")
     }
 
     handleClick2(i, check) {
         let squares = this.state.squares;
         let white = this.state.white;
         let black = this.state.black;
-        if (i.cancelable) {
-            //reset game
-            this.setState({
-                squares: initialiseChessBoard(),
-                whiteFallenSoldiers: [],
-                blackFallenSoldiers: [],
-                player: 1,
-                sourceSelection: -1,
-                status: '',
-                turn: 'white',
-                white: 16,
-                black: 16,
-                lastTurnPawnPosition: undefined,
-                firstMove: undefined,
-                highLightMoves: [],
-                allPossibleMovesWhite: [],
-                allPossibleMovesBlack: [],
-                whiteKingFirstMove: true,
-                blackKingFirstMove: true,
-                whiteRookFirstMoveLeft: true,
-                whiteRookFirstMoveRight: true,
-                blackRookFirstMoveLeft: true,
-                blackRookFirstMoveRight: true,
-                whiteKingPosition: 60,
-                blackKingPosition: 4,
-                tempSquares: [],
-                convertPawnPosition: undefined,
-                disabled: false,
-                hideButton: "none",
-                endpoint: "http://127.0.0.1:4444",
-                socket: null,
-                registered: false,
-                startGame: false,
-                gameId: null,
-                gameData: null,
-                userId: null,
-                rotateBoard: false
-            });
-        } else if (this.state.sourceSelection === -1) {
+        if (this.state.sourceSelection === -1) {
             let highLightMoves = [];
             if (!squares[i] || squares[i].player !== this.state.player) {
                 this.setState({ status: "Wrong selection. Choose player " + this.state.player + " pieces." });
                 squares[i] ? squares[i].style = { ...squares[i].style, backgroundColor: "" } : null;
-                this.state.socket.emit("i", { gameId: this.state.gameId, "i": i, changeTurn: false, userId: this.state.userId, check: check });
+                this.state.socket.emit("moves", { gameId: this.state.gameId, "i": i, changeTurn: false, userId: this.state.userId, check: check });
             } else {
                 //highlight selected piece
                 squares[i].style = { ...squares[i].style, backgroundColor: "RGB(111,143,114)" }; // Emerald from http://omgchess.blogspot.com/2015/09/chess-board-color-schemes.html
@@ -197,7 +172,7 @@ export default class Game extends React.Component {
                     sourceSelection: i,
                     highLightMoves: highLightMoves
                 });
-                this.state.socket.emit("i", { gameId: this.state.gameId, "i": i, changeTurn: false, userId: this.state.userId, check: check });
+                this.state.socket.emit("moves", { gameId: this.state.gameId, "i": i, changeTurn: false, userId: this.state.userId, check: check });
             }
         } else if (this.state.sourceSelection === -2) {
             //to convert pawn that reach other side of the chess board
@@ -223,10 +198,10 @@ export default class Game extends React.Component {
                     convertPawnPosition: undefined,
                     sourceSelection: -1
                 });
-                this.state.socket.emit("i", { gameId: this.state.gameId, "i": i, changeTurn: true, userId: this.state.userId, check: check });
+                this.state.socket.emit("moves", { gameId: this.state.gameId, "i": i, changeTurn: true, userId: this.state.userId, check: check });
             } else {
                 this.wrongMove(squares, "Wrong selection. Choose valid source and destination again.");
-                this.state.socket.emit("i", { gameId: this.state.gameId, "i": i, changeTurn: false, userId: this.state.userId, check: check });
+                this.state.socket.emit("moves", { gameId: this.state.gameId, "i": i, changeTurn: false, userId: this.state.userId, check: check });
             }
         } else if (this.state.sourceSelection > -1) {
             //dehighlight selected piece
@@ -268,7 +243,7 @@ export default class Game extends React.Component {
                             allPossibleMovesWhite: allPossibleMovesWhite,
                             allPossibleMovesBlack: allPossibleMovesBlack
                         });
-                        this.state.socket.emit("i", { gameId: this.state.gameId, "i": i, changeTurn: true, userId: this.state.userId, check: check });
+                        this.state.socket.emit("moves", { gameId: this.state.gameId, "i": i, changeTurn: true, userId: this.state.userId, check: check });
                     } else {
                         //check if current pawn is moving for the first time and moving 2 squares forward
                         let firstMove;
@@ -338,12 +313,12 @@ export default class Game extends React.Component {
                                 allPossibleMovesWhite: allPossibleMovesWhite,
                                 allPossibleMovesBlack: allPossibleMovesBlack
                             });
-                            this.state.socket.emit("i", { gameId: this.state.gameId, "i": i, changeTurn: true, userId: this.state.userId, check: check });
+                            this.state.socket.emit("moves", { gameId: this.state.gameId, "i": i, changeTurn: true, userId: this.state.userId, check: check });
                         }
                     }
                 } else {
                     this.wrongMove(squares, "Wrong selection. Choose valid source and destination again.");
-                    this.state.socket.emit("i", { gameId: this.state.gameId, "i": i, changeTurn: false, userId: this.state.userId, check: check });
+                    this.state.socket.emit("moves", { gameId: this.state.gameId, "i": i, changeTurn: false, userId: this.state.userId, check: check });
                 }
             } else if (squares[this.state.sourceSelection].name === "King") {
                 squares = this.dehighlight(squares);
@@ -384,7 +359,7 @@ export default class Game extends React.Component {
                         whiteKingFirstMove: whiteKingFirstMove,
                         blackKingFirstMove: blackKingFirstMove
                     });
-                    this.state.socket.emit("i", { gameId: this.state.gameId, "i": i, changeTurn: true, userId: this.state.userId, check: check });
+                    this.state.socket.emit("moves", { gameId: this.state.gameId, "i": i, changeTurn: true, userId: this.state.userId, check: check });
                 } else if (this.state.highLightMoves.includes(i)) {
                     //update number of pieces
                     if (squares[i] !== null) {
@@ -415,10 +390,10 @@ export default class Game extends React.Component {
                         whiteKingFirstMove: whiteKingFirstMove,
                         blackKingFirstMove: blackKingFirstMove
                     });
-                    this.state.socket.emit("i", { gameId: this.state.gameId, "i": i, changeTurn: true, userId: this.state.userId, check: check });
+                    this.state.socket.emit("moves", { gameId: this.state.gameId, "i": i, changeTurn: true, userId: this.state.userId, check: check });
                 } else {
                     this.wrongMove(squares, "Wrong selection. Choose valid source and destination again.");
-                    this.state.socket.emit("i", { gameId: this.state.gameId, "i": i, changeTurn: false, userId: this.state.userId, check: check });
+                    this.state.socket.emit("moves", { gameId: this.state.gameId, "i": i, changeTurn: false, userId: this.state.userId, check: check });
                 }
             } else {
                 squares = this.dehighlight(squares);
@@ -466,89 +441,103 @@ export default class Game extends React.Component {
                         allPossibleMovesWhite: allPossibleMovesWhite,
                         allPossibleMovesBlack: allPossibleMovesBlack
                     });
-                    this.state.socket.emit("i", { gameId: this.state.gameId, "i": i, changeTurn: true, userId: this.state.userId, check: check });
+                    this.state.socket.emit("moves", { gameId: this.state.gameId, "i": i, changeTurn: true, userId: this.state.userId, check: check });
                 } else {
                     this.wrongMove(squares, "Wrong selection. Choose valid source and destination again.");
-                    this.state.socket.emit("i", { gameId: this.state.gameId, "i": i, changeTurn: false, userId: this.state.userId, check: check });
+                    this.state.socket.emit("moves", { gameId: this.state.gameId, "i": i, changeTurn: false, userId: this.state.userId, check: check });
                 }
             }
-            //to record next player's possible moves
-            let temp = [];
-            const turn = this.state.turn === "white" ? "black" : "white";
-            const player = this.state.turn === "white" ? 2 : 1;
-            for (let i = 0; i < squares.length; i++) {
-                if (squares[i] !== null) {
-                    if (squares[i].player === player) {
-                        if (squares[i].name === "Pawn") {
-                            temp = temp.concat(this.checkMovesVer2(squares, squares[i].possibleMoves(i, squares), i, turn))
-                        } else if (squares[i].name === "King") {
-                            temp = temp.concat(this.checkMovesVer2(squares, squares[i].possibleMoves(i, squares), i, turn));
-                        } else {
-                            temp = temp.concat(this.checkMovesVer2(squares, squares[i].possibleMoves(i, squares), i, turn));
-                        }
-                    }
-                }
-            }
-            const kingPosition = turn === "white" ? this.state.whiteKingPosition : this.state.blackKingPosition;
-            //if next play doesn't have any possible moves then winner or stalemate
-            if (temp.length === 0) {
-                if (!squares[i].possibleMoves(i, squares).includes(kingPosition)) {
-                    this.setState({
-                        disabled: true,
-                        status: "Stalemate Draw",
-                        hideButton: ""
-                    });
-                } else {
-                    const status = turn === "white" ? "Black Won" : "White Won";
-                    this.setState({
-                        disabled: true,
-                        status: status,
-                        hideButton: ""
-                    });
-                }
-            }
-            //other ways to draw
-            if (black < 3 && white < 3) {
-                let temp = undefined;
-                let temp2 = false;
+
+            if (check) {
+                //for game result
+                //to record next player's possible moves
+                let temp = [];
+                const turn = this.state.turn === "white" ? "black" : "white";
+                const player = this.state.turn === "white" ? 2 : 1;
                 for (let i = 0; i < squares.length; i++) {
                     if (squares[i] !== null) {
-                        if (squares[i].name === "Bishop") {
-                            if ([1, 3, 5, 7, 8, 10, 12, 14, 17, 19, 21, 23, 24, 26, 28, 30, 33, 35, 37, 39, 40, 42, 44, 46, 49, 51, 53, 55, 56, 58, 60, 62].includes(i)) {
-                                if (squares[i].player === 1) {
-                                    temp = true;
-                                } else {
-                                    temp2 = true;
-                                }
+                        if (squares[i].player === player) {
+                            if (squares[i].name === "Pawn") {
+                                temp = temp.concat(this.checkMovesVer2(squares, squares[i].possibleMoves(i, squares), i, turn))
+                            } else if (squares[i].name === "King") {
+                                temp = temp.concat(this.checkMovesVer2(squares, squares[i].possibleMoves(i, squares), i, turn));
                             } else {
-                                if (squares[i].player === 1) {
-                                    temp = false;
-                                } else {
-                                    temp2 = false;
-                                }
+                                temp = temp.concat(this.checkMovesVer2(squares, squares[i].possibleMoves(i, squares), i, turn));
                             }
                         }
                     }
                 }
-                //king and bishop versus king and bishop with the bishops on the same color
-                if (temp === temp2) {
-                    this.setState({
-                        disabled: true,
-                        status: "Draw",
-                        hideButton: ""
-                    });
+                const kingPosition = turn === "white" ? this.state.whiteKingPosition : this.state.blackKingPosition;
+                //if next play doesn't have any possible moves then winner or stalemate
+                if (temp.length === 0) {
+                    if (!squares[i].possibleMoves(i, squares).includes(kingPosition)) {
+                        this.setState({
+                            disabled: true,
+                            status: "Stalemate Draw",
+                            hideButton: ""
+                        });
+                        this.state.socket.emit("gameResult", { gameId: this.state.gameId, userId: this.state.userId, result: "Stalemate Draw" });
+                    } else {
+                        const status = turn === "white" ? "Black Won" : "White Won";
+                        this.setState({
+                            disabled: true,
+                            status: status,
+                            hideButton: ""
+                        });
+                        this.state.socket.emit("gameResult", { gameId: this.state.gameId, userId: this.state.userId, result: status });
+                    }
                 }
-                //king and bishop versus king, king and knight versus king draw
-                if ((black === 2 && white === 1) || (black === 1 && white === 2)) {
+                //other ways to draw
+                if (black < 3 && white < 3) {
                     let temp = undefined;
+                    let temp2 = false;
                     for (let i = 0; i < squares.length; i++) {
                         if (squares[i] !== null) {
-                            if (squares[i].name === "Bishop" || squares[i].name === "Knight") {
-                                temp = true;
+                            if (squares[i].name === "Bishop") {
+                                if ([1, 3, 5, 7, 8, 10, 12, 14, 17, 19, 21, 23, 24, 26, 28, 30, 33, 35, 37, 39, 40, 42, 44, 46, 49, 51, 53, 55, 56, 58, 60, 62].includes(i)) {
+                                    if (squares[i].player === 1) {
+                                        temp = true;
+                                    } else {
+                                        temp2 = true;
+                                    }
+                                } else {
+                                    if (squares[i].player === 1) {
+                                        temp = false;
+                                    } else {
+                                        temp2 = false;
+                                    }
+                                }
                             }
                         }
                     }
-                    if (temp) {
+                    //king and bishop versus king and bishop with the bishops on the same color
+                    if (temp === temp2) {
+                        this.setState({
+                            disabled: true,
+                            status: "Draw",
+                            hideButton: ""
+                        });
+                    }
+                    //king and bishop versus king, king and knight versus king draw
+                    if ((black === 2 && white === 1) || (black === 1 && white === 2)) {
+                        let temp = undefined;
+                        for (let i = 0; i < squares.length; i++) {
+                            if (squares[i] !== null) {
+                                if (squares[i].name === "Bishop" || squares[i].name === "Knight") {
+                                    temp = true;
+                                }
+                            }
+                        }
+                        if (temp) {
+                            this.setState({
+                                disabled: true,
+                                status: "Draw",
+                                hideButton: ""
+                            });
+                        }
+                    }
+                    //king versus king draw
+                    if (black === 1 && white === 1) {
                         this.setState({
                             disabled: true,
                             status: "Draw",
@@ -556,15 +545,8 @@ export default class Game extends React.Component {
                         });
                     }
                 }
-                //king versus king draw
-                if (black === 1 && white === 1) {
-                    this.setState({
-                        disabled: true,
-                        status: "Draw",
-                        hideButton: ""
-                    });
-                }
             }
+
             //update how many pieces left
             this.setState({
                 white: white,
@@ -574,6 +556,7 @@ export default class Game extends React.Component {
     }
 
     handleClick(i) {
+        console.log(i)
         this.handleClick2(i, true);
     }
 
@@ -793,7 +776,8 @@ export default class Game extends React.Component {
                                         />
                                         }
                                     </div>
-                                    <button onClick={(i) => this.handleClick(i)} disabled={false} style={{ display: this.state.hideButton }}>new game</button>
+                                    <button onClick={this.newGame} disabled={false} style={{ display: this.state.hideButton }}>new game</button>
+                                    <button onClick={this.disconnect} disabled={false} style={{ display: this.state.hideButton }}>disconnect</button>
                                 </div>
                             </div>
                             <div className="icons-attribution">
