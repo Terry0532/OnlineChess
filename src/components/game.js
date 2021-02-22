@@ -88,6 +88,7 @@ export default class Game extends React.Component {
 
     newGame() {
         console.log("new game")
+        this.state.socket.emit("newGame", {})
     }
 
     disconnect() {
@@ -517,6 +518,7 @@ export default class Game extends React.Component {
                             status: "Draw",
                             hideButton: ""
                         });
+                        this.state.socket.emit("gameResult", { gameId: this.state.gameId, userId: this.state.userId, result: "Draw" });
                     }
                     //king and bishop versus king, king and knight versus king draw
                     if ((black === 2 && white === 1) || (black === 1 && white === 2)) {
@@ -534,6 +536,7 @@ export default class Game extends React.Component {
                                 status: "Draw",
                                 hideButton: ""
                             });
+                            this.state.socket.emit("gameResult", { gameId: this.state.gameId, userId: this.state.userId, result: "Draw" });
                         }
                     }
                     //king versus king draw
@@ -543,6 +546,7 @@ export default class Game extends React.Component {
                             status: "Draw",
                             hideButton: ""
                         });
+                        this.state.socket.emit("gameResult", { gameId: this.state.gameId, userId: this.state.userId, result: "Draw" });
                     }
                 }
             }
@@ -556,7 +560,6 @@ export default class Game extends React.Component {
     }
 
     handleClick(i) {
-        console.log(i)
         this.handleClick2(i, true);
     }
 

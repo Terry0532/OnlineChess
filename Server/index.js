@@ -148,9 +148,16 @@ io.on("connection", client => {
         }
     });
 
+    //send the game result to opponent
     client.on("gameResult", data => {
         let opponentId = data.userId === games[data.gameId].player1 ? games[data.gameId].player2 : games[data.gameId].player1;
         if (data.result === "Stalemate Draw") {
+            players[games[data.gameId][games[data.gameId].player1].name].draw++;
+            players[games[data.gameId][games[data.gameId].player2].name].draw++;
+            games[data.gameId].game_status = "draw";
+            io.to(opponentId).emit("gameover", { result: data.result });
+        }
+        if (data.result === "Draw") {
             players[games[data.gameId][games[data.gameId].player1].name].draw++;
             players[games[data.gameId][games[data.gameId].player2].name].draw++;
             games[data.gameId].game_status = "draw";
@@ -161,10 +168,18 @@ io.on("connection", client => {
             games[data.gameId].game_status = "won";
             players[games[data.gameId][games[data.gameId].game_winner].name].won++;
             io.to(opponentId).emit("gameover", { result: data.result });
-            console.log(games)
-            console.log(players)
+        }
+        if (data.result === "Black Won") {
+            games[data.gameId].game_winner = games[data.gameId].whose_turn === games[data.gameId].player1 ? games[data.gameId].player2 : games[data.gameId].player1;
+            games[data.gameId].game_status = "won";
+            players[games[data.gameId][games[data.gameId].game_winner].name].won++;
+            io.to(opponentId).emit("gameover", { result: data.result });
         }
     });
+
+    client.on("newGame", data => {
+
+    })
 });
 
 // Generate Game ID
