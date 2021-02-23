@@ -9,11 +9,13 @@ class ShowUsers extends Component {
     }
     componentDidMount() {
         this.props.socket.on('getOpponentsResponse', data => {
+            console.log("12")
             this.setState({
                 opponents: data
             });
         });
         this.props.socket.on('newOpponentAdded', data => {
+            console.log("18")
             this.setState({
                 opponents: [...this.state.opponents, data]
             });
@@ -72,9 +74,13 @@ class ShowUsers extends Component {
             this.props.gameStartConfirmation(data);
         });
 
+        console.log("get opponent")
         this.props.socket.emit('getOpponents', {});
     }
     selectOpponent = (index) => {
+        console.log("select opponent")
+        console.log(index)
+        console.log(this.state.opponents[index].id)
         this.props.socket.emit('selectOpponent', { "id": this.state.opponents[index].id });
     };
     render() {

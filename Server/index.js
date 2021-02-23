@@ -78,7 +78,7 @@ io.on("connection", client => {
 
     client.on('disconnect', () => {
         console.log("disconnect : " + client.id);
-        if (typeof sockets[client.id] != "undefined") {
+        if (typeof sockets[client.id] !== "undefined") {
             if (sockets[client.id].is_playing && games[sockets[client.id].game_id] !== undefined) {
                 io.to(sockets[client.id].game_id).emit('opponentLeft', {});
                 players[sockets[games[sockets[client.id].game_id].player1].name].played--;
@@ -91,13 +91,10 @@ io.on("connection", client => {
         client.broadcast.emit('opponentDisconnected', {
             id: client.id
         });
-        console.log(sockets)
-        console.log(players)
-        console.log(games)
     });
 
     client.on('selectOpponent', data => {
-        if (!sockets[data.id].is_playing) {
+        if (sockets[data.id] && !sockets[data.id].is_playing && !sockets[client.id].is_playing) {
             var gameId = uuidv4();
             sockets[data.id].is_playing = true;
             sockets[client.id].is_playing = true;
@@ -138,7 +135,7 @@ io.on("connection", client => {
 
     //sending moves between players
     client.on("moves", data => {
-        let opponentId = data.userId === games[data.gameId].player1 ? games[data.gameId].player2 : games[data.gameId].player1;
+        const opponentId = data.userId === games[data.gameId].player1 ? games[data.gameId].player2 : games[data.gameId].player1;
         if (data.changeTurn && data.check) {
             games[data.gameId].whose_turn = games[data.gameId].whose_turn === games[data.gameId].player1 ? games[data.gameId].player2 : games[data.gameId].player1;
             io.to(opponentId).emit("updateGameData", { turn: games[data.gameId].whose_turn, i: data.i });
@@ -150,7 +147,7 @@ io.on("connection", client => {
 
     //send the game result to opponent
     client.on("gameResult", data => {
-        let opponentId = data.userId === games[data.gameId].player1 ? games[data.gameId].player2 : games[data.gameId].player1;
+        const opponentId = data.userId === games[data.gameId].player1 ? games[data.gameId].player2 : games[data.gameId].player1;
         if (data.result === "Stalemate Draw") {
             players[games[data.gameId][games[data.gameId].player1].name].draw++;
             players[games[data.gameId][games[data.gameId].player2].name].draw++;
@@ -177,9 +174,24 @@ io.on("connection", client => {
         }
     });
 
+    //check if both players want to rematch
     client.on("newGame", data => {
 
-    })
+    });
+
+    client.on("leaveGame", data => {
+        const opponentId = data.userId === games[data.gameId].player1 ? games[data.gameId].player2 : games[data.gameId].player1;
+        io.to(data.userId).emit("toLobby");
+        sockets[data.userId].is_playing = false;
+        sockets[data.userId].game_id = null;
+        io.sockets.connected[data.userId].leave(data);
+        if (!data.check) {
+            io.to(opponentId).emit("disconnectButton")
+        }
+        if (data.check) {
+            delete games[data.gameId];
+        }
+    });
 });
 
 // Generate Game ID

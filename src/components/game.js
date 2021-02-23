@@ -84,6 +84,45 @@ export default class Game extends React.Component {
                 hideButton: ""
             });
         });
+        socket.on("disconnectButton", () => {
+            alert("Opponent left");
+            this.state.socket.emit("leaveGame", { gameId: this.state.gameId, userId: this.state.userId, check: true });
+        });
+        socket.on("toLobby", () => {
+            //reset game
+            this.setState({
+                squares: initialiseChessBoard(),
+                whiteFallenSoldiers: [],
+                blackFallenSoldiers: [],
+                player: 1,
+                sourceSelection: -1,
+                status: '',
+                turn: 'white',
+                white: 16,
+                black: 16,
+                lastTurnPawnPosition: undefined,
+                firstMove: undefined,
+                highLightMoves: [],
+                allPossibleMovesWhite: [],
+                allPossibleMovesBlack: [],
+                whiteKingFirstMove: true,
+                blackKingFirstMove: true,
+                whiteRookFirstMoveLeft: true,
+                whiteRookFirstMoveRight: true,
+                blackRookFirstMoveLeft: true,
+                blackRookFirstMoveRight: true,
+                whiteKingPosition: 60,
+                blackKingPosition: 4,
+                tempSquares: [],
+                convertPawnPosition: undefined,
+                disabled: false,
+                hideButton: "none",
+                startGame: false,
+                gameId: null,
+                gameData: null,
+                rotateBoard: ""
+            });
+        });
     }
 
     newGame() {
@@ -91,8 +130,8 @@ export default class Game extends React.Component {
         this.state.socket.emit("newGame", {})
     }
 
-    disconnect() {
-        console.log("disconnect")
+    disconnect = () => {
+        this.state.socket.emit("leaveGame", { gameId: this.state.gameId, userId: this.state.userId, check: false });
     }
 
     handleClick2(i, check) {
