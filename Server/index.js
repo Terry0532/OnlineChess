@@ -1,16 +1,25 @@
-const server = require("http").createServer();
+const path = require('path');
+const express = require('express');
+const app = express();
+const server = require("http").createServer(app);
 const io = require("socket.io")(server, {
     cors: {
         credentials: true
     }
 });
-const PORT = 4444;
+const PORT = process.env.PORT || 4444;
 const HOST = "127.0.0.1";
 let sockets = {};
 let players = {};
 let games = {};
 
-server.listen(PORT, HOST);
+app.use(express.static(path.join(__dirname, '../build')));
+app.get('/', (req, res, next) => {
+    res.sendFile(path.join(__dirname, "../build/index.html"));
+});
+
+server.listen(PORT, "0.0.0.0");
+server.listen(4444, process.env.OPENSHIFT_NODEJS_IP || process.env.IP || '127.0.0.1')
 console.log("listening to : " + HOST + ":" + PORT);
 
 io.on("connection", client => {
