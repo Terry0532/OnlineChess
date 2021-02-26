@@ -184,10 +184,8 @@ io.on("connection", client => {
             players[sockets[games[data.gameId].player1].name].played = players[sockets[games[data.gameId].player1].name].played + 1;
             players[sockets[games[data.gameId].player2].name].played = players[sockets[games[data.gameId].player2].name].played + 1;
 
-            const whoseTurn = games[data.gameId][data.userId].side === "white" ? games[data.gameId].player2 : games[data.gameId].player2;
-            if (games[data.gameId][data.userId].side === "white") {
-                
-            }
+            const whoseTurn = games[data.gameId][data.userId].side === "white" ? opponentId : data.userId;
+            const otherPlayerId = whoseTurn === games[data.gameId].player1 ? games[data.gameId].player2 : games[data.gameId].player1;
 
             games[gameId] = {
                 player1: games[data.gameId].player1,
@@ -196,24 +194,24 @@ io.on("connection", client => {
                 game_status: "ongoing", // "ongoing","won","draw"
                 game_winner: null // winner_id if status won
             };
-            games[gameId][games[data.gameId].player1] = {
-                name: sockets[games[data.gameId].player1].name,
-                side: "black",
-                played: players[sockets[games[data.gameId].player1].name].played,
-                won: players[sockets[games[data.gameId].player1].name].won,
-                draw: players[sockets[games[data.gameId].player1].name].draw
-            };
-            games[gameId][games[data.gameId].player2] = {
-                name: sockets[games[data.gameId].player2].name,
+            games[gameId][whoseTurn] = {
+                name: sockets[whoseTurn].name,
                 side: "white",
-                played: players[sockets[games[data.gameId].player2].name].played,
-                won: players[sockets[games[data.gameId].player2].name].won,
-                draw: players[sockets[games[data.gameId].player2].name].draw
+                played: players[sockets[whoseTurn].name].played,
+                won: players[sockets[whoseTurn].name].won,
+                draw: players[sockets[whoseTurn].name].draw
+            };
+            games[gameId][otherPlayerId] = {
+                name: sockets[otherPlayerId].name,
+                side: "black",
+                played: players[sockets[otherPlayerId].name].played,
+                won: players[sockets[otherPlayerId].name].won,
+                draw: players[sockets[otherPlayerId].name].draw
             };
             io.sockets.connected[games[data.gameId].player1].join(gameId);
             io.sockets.connected[games[data.gameId].player2].join(gameId);
 
-            io.to(gameId).emit('nextGameData', { status: true, game_id: gameId, game_data: games[gameId] });
+            io.to(gameId).emit('nextGameData', { game_id: gameId, game_data: games[gameId] });
 
             io.sockets.connected[games[data.gameId].player1].leave(data.gameId);
             io.sockets.connected[games[data.gameId].player2].leave(data.gameId);

@@ -136,6 +136,83 @@ export default class Game extends React.Component {
                 continueGame: false
             });
         });
+        socket.on("nextGameData", data => {
+            if (data.game_data.whose_turn !== this.state.userId) {
+                this.setState({
+                    squares: initialiseChessBoard(),
+                    whiteFallenSoldiers: [],
+                    blackFallenSoldiers: [],
+                    player: 1,
+                    sourceSelection: -1,
+                    status: '',
+                    turn: 'white',
+                    white: 16,
+                    black: 16,
+                    lastTurnPawnPosition: undefined,
+                    firstMove: undefined,
+                    highLightMoves: [],
+                    allPossibleMovesWhite: [],
+                    allPossibleMovesBlack: [],
+                    whiteKingFirstMove: true,
+                    blackKingFirstMove: true,
+                    whiteRookFirstMoveLeft: true,
+                    whiteRookFirstMoveRight: true,
+                    blackRookFirstMoveLeft: true,
+                    blackRookFirstMoveRight: true,
+                    whiteKingPosition: 60,
+                    blackKingPosition: 4,
+                    tempSquares: [],
+                    convertPawnPosition: undefined,
+                    disabled: true,
+                    hideButton: "none",
+                    gameId: data.game_id,
+                    gameData: data.game_data,
+                    rotateBoard: "rotate",
+                    disableNewGameButton: false,
+                    newGameButton: "New Game",
+                    leaveButton: "Leave Game",
+                    disableLeaveGameButton: false,
+                    continueGame: false
+                });
+            } else {
+                this.setState({
+                    squares: initialiseChessBoard(),
+                    whiteFallenSoldiers: [],
+                    blackFallenSoldiers: [],
+                    player: 1,
+                    sourceSelection: -1,
+                    status: '',
+                    turn: 'white',
+                    white: 16,
+                    black: 16,
+                    lastTurnPawnPosition: undefined,
+                    firstMove: undefined,
+                    highLightMoves: [],
+                    allPossibleMovesWhite: [],
+                    allPossibleMovesBlack: [],
+                    whiteKingFirstMove: true,
+                    blackKingFirstMove: true,
+                    whiteRookFirstMoveLeft: true,
+                    whiteRookFirstMoveRight: true,
+                    blackRookFirstMoveLeft: true,
+                    blackRookFirstMoveRight: true,
+                    whiteKingPosition: 60,
+                    blackKingPosition: 4,
+                    tempSquares: [],
+                    convertPawnPosition: undefined,
+                    disabled: false,
+                    hideButton: "none",
+                    gameId: data.game_id,
+                    gameData: data.game_data,
+                    rotateBoard: "",
+                    disableNewGameButton: false,
+                    newGameButton: "New Game",
+                    leaveButton: "Leave Game",
+                    disableLeaveGameButton: false,
+                    continueGame: false
+                });
+            }
+        });
     }
 
     newGame = () => {
