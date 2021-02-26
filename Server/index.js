@@ -176,7 +176,52 @@ io.on("connection", client => {
 
     //check if both players want to rematch
     client.on("newGame", data => {
+        const opponentId = data.userId === games[data.gameId].player1 ? games[data.gameId].player2 : games[data.gameId].player1;
+        if (data.check) {
+            const gameId = uuidv4();
+            sockets[games[data.gameId].player1].game_id = gameId;
+            sockets[games[data.gameId].player2].game_id = gameId;
+            players[sockets[games[data.gameId].player1].name].played = players[sockets[games[data.gameId].player1].name].played + 1;
+            players[sockets[games[data.gameId].player2].name].played = players[sockets[games[data.gameId].player2].name].played + 1;
 
+            const whoseTurn = games[data.gameId][data.userId].side === "white" ? games[data.gameId].player2 : games[data.gameId].player2;
+            if (games[data.gameId][data.userId].side === "white") {
+                
+            }
+
+            games[gameId] = {
+                player1: games[data.gameId].player1,
+                player2: games[data.gameId].player2,
+                whose_turn: whoseTurn,
+                game_status: "ongoing", // "ongoing","won","draw"
+                game_winner: null // winner_id if status won
+            };
+            games[gameId][games[data.gameId].player1] = {
+                name: sockets[games[data.gameId].player1].name,
+                side: "black",
+                played: players[sockets[games[data.gameId].player1].name].played,
+                won: players[sockets[games[data.gameId].player1].name].won,
+                draw: players[sockets[games[data.gameId].player1].name].draw
+            };
+            games[gameId][games[data.gameId].player2] = {
+                name: sockets[games[data.gameId].player2].name,
+                side: "white",
+                played: players[sockets[games[data.gameId].player2].name].played,
+                won: players[sockets[games[data.gameId].player2].name].won,
+                draw: players[sockets[games[data.gameId].player2].name].draw
+            };
+            io.sockets.connected[games[data.gameId].player1].join(gameId);
+            io.sockets.connected[games[data.gameId].player2].join(gameId);
+
+            io.to(gameId).emit('nextGameData', { status: true, game_id: gameId, game_data: games[gameId] });
+
+            io.sockets.connected[games[data.gameId].player1].leave(data.gameId);
+            io.sockets.connected[games[data.gameId].player2].leave(data.gameId);
+            delete games[data.gameId];
+        }
+        if (!data.check) {
+            io.to(opponentId).emit("continueGame");
+        }
     });
 
     client.on("leaveGame", data => {
@@ -186,7 +231,7 @@ io.on("connection", client => {
         sockets[data.userId].game_id = null;
         io.sockets.connected[data.userId].leave(data);
         if (!data.check) {
-            io.to(opponentId).emit("disconnectButton")
+            io.to(opponentId).emit("disconnectButton");
         }
         if (data.check) {
             delete games[data.gameId];

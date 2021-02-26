@@ -54,7 +54,12 @@ export default class Game extends React.Component {
             gameId: null,
             gameData: null,
             userId: null,
-            rotateBoard: ""
+            rotateBoard: "",
+            disableNewGameButton: false,
+            newGameButton: "New Game",
+            leaveButton: "Leave Game",
+            disableLeaveGameButton: false,
+            continueGame: false
         }
     }
 
@@ -83,6 +88,9 @@ export default class Game extends React.Component {
                 status: data.result,
                 hideButton: ""
             });
+        });
+        socket.on("continueGame", () => {
+            this.setState({ newGameButton: "Yes", leaveButton: "No", status: "Do you want to play again?", continueGame: true });
         });
         socket.on("disconnectButton", () => {
             alert("Opponent left");
@@ -120,14 +128,24 @@ export default class Game extends React.Component {
                 startGame: false,
                 gameId: null,
                 gameData: null,
-                rotateBoard: ""
+                rotateBoard: "",
+                disableNewGameButton: false,
+                newGameButton: "New Game",
+                leaveButton: "Leave Game",
+                disableLeaveGameButton: false,
+                continueGame: false
             });
         });
     }
 
-    newGame() {
-        console.log("new game")
-        this.state.socket.emit("newGame", {})
+    newGame = () => {
+        if (this.state.continueGame) {
+            this.state.socket.emit("newGame", { userId: this.state.userId, gameId: this.state.gameId, check: true });
+        }
+        if (!this.state.continueGame) {
+            this.state.socket.emit("newGame", { userId: this.state.userId, gameId: this.state.gameId, check: false });
+            this.setState({ disableNewGameButton: true, status: "Waiting for other player", disableLeaveGameButton: true });
+        }
     }
 
     disconnect = () => {
@@ -818,8 +836,8 @@ export default class Game extends React.Component {
                                         />
                                         }
                                     </div>
-                                    <button onClick={this.newGame} disabled={false} style={{ display: this.state.hideButton }}>new game</button>
-                                    <button onClick={this.disconnect} disabled={false} style={{ display: this.state.hideButton }}>disconnect</button>
+                                    <button onClick={this.newGame} disabled={this.state.disableNewGameButton} style={{ display: this.state.hideButton }}>{this.state.newGameButton}</button>
+                                    <button onClick={this.disconnect} disabled={this.state.disableLeaveGameButton} style={{ display: this.state.hideButton }}>{this.state.leaveButton}</button>
                                 </div>
                             </div>
                             <div className="icons-attribution">
