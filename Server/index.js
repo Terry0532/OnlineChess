@@ -18,9 +18,10 @@ app.get('/', (req, res, next) => {
     res.sendFile(path.join(__dirname, "../build/index.html"));
 });
 
-server.listen(PORT, "0.0.0.0");
-server.listen(4444, process.env.OPENSHIFT_NODEJS_IP || process.env.IP || '127.0.0.1')
-console.log("listening to : " + HOST + ":" + PORT);
+// server.listen(PORT, "0.0.0.0");
+server.listen(PORT);
+// server.listen(4444, process.env.OPENSHIFT_NODEJS_IP || process.env.IP || '127.0.0.1')
+// console.log("listening to : " + HOST + ":" + PORT);
 
 io.on("connection", client => {
     console.log("connected : " + client.id);
